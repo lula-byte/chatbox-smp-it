@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruang Publik Virtual — Chat Kelas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --grad: linear-gradient(135deg,#FF5F9E 0%,#A55FEF 50%,#3EB6FF 100%);
+  --bg:#F2F7FF; --ink:#1E2A3A; --muted:#7A8AA0;
+  --bubble-me:#D9FDD3; --bubble-you:#FFFFFF;
+  --accent:#FF5F9E; --accent2:#A55FEF;
+  --shadow:0 18px 50px rgba(165,95,239,.25);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--ink);
+  background:
+    radial-gradient(600px 300px at 10% 10%, #FFD3E8 0%, transparent 60%),
+    radial-gradient(700px 350px at 90% 15%, #D6C6FF 0%, transparent 60%),
+    radial-gradient(600px 400px at 50% 100%, #BEE6FF 0%, transparent 60%),
+    var(--bg);
+  display:flex;align-items:center;justify-content:center;padding:18px;
+}
+#app{
+  width:100%;max-width:1180px;height:94vh;background:#fff;border-radius:24px;
+  box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;
+}
+/* ---------- LOGIN ---------- */
+#loginScreen{flex:1;display:flex;align-items:center;justify-content:center;background:var(--grad);padding:20px}
+.login-card{background:#fff;border-radius:22px;padding:34px 30px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center}
+.login-card .logo{font-size:52px;margin-bottom:6px}
+.login-card h1{font-size:22px;font-weight:800;margin-bottom:4px}
+.login-card p{color:var(--muted);font-size:13px;margin-bottom:18px}
+.login-card input{width:100%;padding:13px 15px;border:2px solid #E4EAF3;border-radius:14px;font-size:15px;font-family:inherit;margin-bottom:12px;outline:none;transition:.2s}
+.login-card input:focus{border-color:var(--accent2);box-shadow:0 0 0 4px rgba(165,95,239,.12)}
+.btn{background:var(--grad);border:none;color:#fff;font-weight:700;font-size:15px;padding:13px 22px;border-radius:14px;cursor:pointer;font-family:inherit;transition:.2s;width:100%}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(165,95,239,.4)}
+.btn:active{transform:translateY(0)}
+.btn.small{width:auto;padding:9px 16px;font-size:13px;border-radius:11px}
+.btn.ghost{background:#EEF3FA;color:var(--ink)}
+.btn.danger{background:linear-gradient(135deg,#FF5F6D,#FFC371)}
+.btn.warn{background:linear-gradient(135deg,#FFA502,#FF7A3D)}
+.err{color:#E63E54;font-size:13px;margin-top:10px;min-height:18px;font-weight:600}
+.demo-hint{margin-top:14px;background:#FFF6E5;border:1px dashed #FFB800;border-radius:12px;padding:10px;font-size:12px;color:#8a6d1a;text-align:left}
+/* ---------- CHAT ---------- */
+#chatScreen{flex:1;display:none;min-height:0}
+.chat-wrap{flex:1;display:flex;min-height:0}
+/* sidebar */
+.sidebar{width:300px;background:#FAFBFF;border-right:1px solid #E9EEF7;display:flex;flex-direction:column;flex-shrink:0}
+.my-card{padding:16px;display:flex;align-items:center;gap:12px;background:var(--grad);color:#fff}
+.avatar{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0}
+.avatar.sm{width:38px;height:38px;font-size:22px}
+.my-card .who{flex:1;min-width:0}
+.my-card .who .nm{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.my-card .who .role{font-size:12px;opacity:.85}
+.side-sec{padding:14px 16px 6px;font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+#onlineList{padding:0 8px;overflow-y:auto;max-height:260px}
+.member{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;font-size:14px}
+.member:hover{background:#F0F4FA}
+.member .nm{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dot{width:10px;height:10px;border-radius:50%;background:#2ED573;box-shadow:0 0 6px #2ED573}
+.dot.off{background:#C4CEDD;box-shadow:none}
+.side-actions{margin-top:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+/* main */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+.chat-head{background:var(--grad);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px}
+.chat-head h2{font-size:17px;font-weight:800}
+.chat-head .sub{font-size:12px;opacity:.9}
+#messages{flex:1;overflow-y:auto;padding:22px 26px;display:flex;flex-direction:column;gap:10px;
+  background:radial-gradient(circle at 20% 30%, rgba(255,95,158,.06) 0 40px, transparent 41px),
+             radial-gradient(circle at 80% 70%, rgba(62,182,255,.08) 0 50px, transparent 51px),#EDF3FB}
+.msg{display:flex;gap:9px;max-width:72%;align-items:flex-end}
+.msg.me{align-self:flex-end;flex-direction:row-reverse}
+.bubble{background:var(--bubble-you);border-radius:4px 16px 16px 16px;padding:9px 13px 6px;box-shadow:0 2px 6px rgba(30,42,58,.08);position:relative;min-width:60px}
+.msg.me .bubble{background:var(--bubble-me);border-radius:16px 4px 16px 16px}
+.bubble .sender{font-size:12.5px;font-weight:800;margin-bottom:2px}
+.bubble .text{font-size:14.5px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.bubble .time{font-size:10.5px;color:var(--muted);text-align:right;margin-top:3px}
+.msg.deleted .text{color:var(--muted);font-style:italic}
+.del-btn{position:absolute;top:-9px;right:-9px;background:#fff;border:1px solid #E4EAF3;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:13px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.msg:hover .del-btn.admin-visible{display:flex}
+/* input */
+.composer{padding:14px 20px;background:#F7FAFF;border-top:1px solid #E9EEF7}
+#muteBanner{display:none;background:linear-gradient(135deg,#FF5F6D,#FF9A8B);color:#fff;font-weight:700;font-size:13px;padding:10px 14px;border-radius:12px;margin-bottom:10px;text-align:center}
+.input-row{display:flex;gap:10px}
+#msgInput{flex:1;padding:13px 16px;border:2px solid #E4EAF3;border-radius:16px;font-size:15px;font-family:inherit;outline:none;resize:none;max-height:120px}
+#msgInput:focus{border-color:var(--accent2)}
+#sendBtn{width:auto;padding:0 26px;border-radius:16px;font-size:15px}
+/* ---------- MODAL ---------- */
+.modal{position:fixed;inset:0;background:rgba(30,42,58,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+.modal.open{display:flex}
+.modal-card{background:#fff;border-radius:22px;padding:26px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow)}
+.modal-card.wide{max-width:760px}
+.modal-card h3{font-size:18px;font-weight:800;margin-bottom:14px}
+.modal-card label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px;color:var(--muted)}
+.modal-card input,.modal-card textarea{width:100%;padding:11px 13px;border:2px solid #E4EAF3;border-radius:12px;font-size:14px;font-family:inherit;outline:none}
+.modal-card input:focus,.modal-card textarea:focus{border-color:var(--accent2)}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+.modal-actions .btn{flex:1}
+.emoji-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:6px;margin-top:4px}
+.emoji-grid button{font-size:24px;background:#F2F5FA;border:2px solid transparent;border-radius:12px;padding:6px;cursor:pointer;transition:.15s}
+.emoji-grid button:hover{transform:scale(1.15)}
+.emoji-grid button.sel{border-color:var(--accent);background:#FFE9F2}
+/* admin table */
+.admin-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+.admin-table th,.admin-table td{border:1px solid #E4EAF3;padding:8px 7px;text-align:left;vertical-align:middle}
+.admin-table th{background:#F2F5FA;font-weight:800}
+.admin-table .rowbtn{padding:5px 9px;font-size:11px;border:none;border-radius:8px;cursor:pointer;font-weight:700;margin:1px}
+.tag{display:inline-block;font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:20px}
+.tag.guru{background:#E8D9FF;color:#7A3FE8}.tag.siswa{background:#DFF3FF;color:#1B7FC4}
+.tag.on{background:#D9F7E5;color:#1E9E5A}.tag.off{background:#EDF0F5;color:#8A97AA}
+.tag.muted{background:#FFE3E6;color:#D63347}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:#1E2A3A;color:#fff;padding:12px 22px;border-radius:14px;font-size:14px;font-weight:600;z-index:99;display:none;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.hamb{display:none;background:rgba(255,255,255,.25);border:none;color:#fff;font-size:20px;border-radius:10px;padding:4px 10px;cursor:pointer}
+@media(max-width:820px){
+  .sidebar{position:absolute;z-index:20;height:100%;transform:translateX(-105%);transition:.25s;background:#fff}
+  .sidebar.open{transform:none}
+  .hamb{display:block}
+  #app{height:96vh;border-radius:16px}
+  .msg{max-width:88%}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ LOGIN ============ -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="logo">💬</div>
+      <h1>Ruang Publik Virtual</h1>
+      <p>Chat kelas interaktif — masuk untuk mulai berdiskusi!</p>
+      <input id="username" placeholder="Nama pengguna" autocomplete="username">
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+      <button class="btn" id="loginBtn">Masuk 🚀</button>
+      <div class="err" id="loginErr"></div>
+      <div class="demo-hint" id="demoHint" style="display:none">
+        <b>Mode Demo</b> (backend belum disambung). Coba akun:<br>
+        👩‍🏫 Guru: <b>guru</b> / <b>guru123</b><br>
+        🧑 Siswa: <b>bima</b> / <b>siswa123</b>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CHAT ============ -->
+  <div id="chatScreen">
+    <div class="chat-wrap">
+      <aside class="sidebar" id="sidebar">
+        <div class="my-card">
+          <div class="avatar" id="myAvatar">🙂</div>
+          <div class="who">
+            <div class="nm" id="myName">-</div>
+            <div class="role" id="myRole">-</div>
+          </div>
+        </div>
+        <div class="side-sec">🟢 Sedang Online (<span id="onlineCount">0</span>)</div>
+        <div id="onlineList"></div>
+        <div class="side-actions">
+          <button class="btn small ghost" id="profileBtn">⚙️ Profil Saya</button>
+          <button class="btn small" id="adminBtn" style="display:none">🛡️ Panel Guru</button>
+          <button class="btn small ghost" id="logoutBtn">🚪 Keluar</button>
+        </div>
+      </aside>
+
+      <div class="main">
+        <div class="chat-head">
+          <button class="hamb" id="hambBtn">☰</button>
+          <div>
+            <h2>🏫 Ruang Publik Virtual — Chat Kelas</h2>
+            <div class="sub" id="headSub">Berinteraksi dengan sopan ya! ✨</div>
+          </div>
+        </div>
+        <div id="messages"></div>
+        <div class="composer">
+          <div id="muteBanner"></div>
+          <div class="input-row">
+            <textarea id="msgInput" rows="1" placeholder="Tulis pesan... (Enter untuk kirim)"></textarea>
+            <button class="btn" id="sendBtn">Kirim ➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL PROFIL ============ -->
+<div class="modal" id="profileModal">
+  <div class="modal-card">
+    <h3>⚙️ Profil Saya</h3>
+    <label>Nama tampilan</label>
+    <input id="pfName" maxlength="30">
+    <label>Pilih ikon profil (emoji binatang)</label>
+    <div class="emoji-grid" id="avatarGrid"></div>
+    <label>Ganti password (opsional)</label>
+    <input id="pfOld" type="password" placeholder="Password lama">
+    <input id="pfNew" type="password" placeholder="Password baru (min. 4 karakter)" style="margin-top:8px">
+    <div class="err" id="pfErr"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="pfCancel">Batal</button>
+      <button class="btn" id="pfSave">Simpan 💾</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL ADMIN ============ -->
+<div class="modal" id="adminModal">
+  <div class="modal-card wide">
+    <h3>🛡️ Panel Guru — Kelola Kelas</h3>
+    <label>Buat akun siswa (satu nama panggilan per baris)</label>
+    <textarea id="admNick" rows="4" placeholder="Contoh:&#10;bima&#10;sinta&#10;raka"></textarea>
+    <label>Password default untuk akun baru</label>
+    <input id="admPw" value="siswa123">
+    <div class="modal-actions" style="margin-top:10px">
+      <button class="btn" id="admCreate">➕ Buat Akun</button>
+    </div>
+    <div class="err" id="admMsg"></div>
+    <label>Daftar pengguna</label>
+    <div style="overflow-x:auto">
+      <table class="admin-table">
+        <thead><tr><th>Pengguna</th><th>Status</th><th>Mute</th><th>Aksi</th></tr></thead>
+        <tbody id="admUsers"></tbody>
+      </table>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" id="admClose">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= KONFIGURASI =================
+   Isi dengan URL Web App dari Google Apps Script setelah deploy.
+   Contoh: const API_URL = 'https://script.google.com/macros/s/AKfycbyaETgZGiYnPZ4Fv7erPvTYFx0N3RcaiNR-opzyzoI6GicTKllfRfsUBeVXyVC8IYq-/exec';
+   Kosongkan ('') untuk MODE DEMO (data contoh, tersimpan di browser). */
+const API_URL = '';
+
+const AVATARS = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦄','🐣','🦉','🦋','🐢','🐙','🐠','🦖','🦩','🐺','🐴'];
+const NAME_COLORS = ['#E63E54','#F08C1A','#1B9E5F','#1B7FC4','#7A3FE8','#C2269A','#0E9AA7','#E8871E'];
+
+/* ================= UTIL ================= */
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtTime(ts){ const d=new Date(ts); return String(d.getHours()).padStart(2,'0')+'.'+String(d.getMinutes()).padStart(2,'0'); }
+function nameColor(name){ let h=0; for(const c of name) h=(h*31+c.charCodeAt(0))>>>0; return NAME_COLORS[h%NAME_COLORS.length]; }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',2600); }
+
+/* ================= MOCK API (MODE DEMO) ================= */
+const MockDB = {
+  users:[
+    {id:'u-guru',username:'guru',password:'guru123',displayName:'Pak Guru',role:'guru',avatar:'🦉',mutedUntil:0,lastSeen:0},
+    {id:'u1',username:'bima',password:'siswa123',displayName:'Bima',role:'siswa',avatar:'🐼',mutedUntil:0,lastSeen:0},
+    {id:'u2',username:'sinta',password:'siswa123',displayName:'Sinta',role:'siswa',avatar:'🐰',mutedUntil:0,lastSeen:0},
+    {id:'u3',username:'raka',password:'siswa123',displayName:'Raka',role:'siswa',avatar:'🦊',mutedUntil:0,lastSeen:0},
+    {id:'u4',username:'dina',password:'siswa123',displayName:'Dina',role:'siswa',avatar:'🐱',mutedUntil:0,lastSeen:0},
+    {id:'u5',username:'fajar',password:'siswa123',displayName:'Fajar',role:'siswa',avatar:'🐶',mutedUntil:0,lastSeen:0},
+  ],
+  sessions:{},
+  messages:[
+    {id:'m1',userId:'u-guru',displayName:'Pak Guru',avatar:'🦉',text:'Selamat pagi anak-anak! 👋 Hari ini kita mulai diskusi di Ruang Publik Virtual ya.',ts:Date.now()-300*60000,deleted:false},
+    {id:'m2',userId:'u2',displayName:'Sinta',avatar:'🐰',text:'Pagi Pak! Siap 😊',ts:Date.now()-288*60000,deleted:false},
+    {id:'m3',userId:'u1',displayName:'Bima',avatar:'🐼',text:'Pagi semuaa 🙌',ts:Date.now()-276*60000,deleted:false},
+    {id:'m4',userId:'u3',displayName:'Raka',avatar:'🦊',text:'Hadir Pak!',ts:Date.now()-264*60000,deleted:false},
+    {id:'m5',userId:'u4',displayName:'Dina',avatar:'🐱',text:'Pagi Pak Guru, pagi teman-teman!',ts:Date.now()-252*60000,deleted:false},
+    {id:'m6',userId:'u-guru',displayName:'Pak Guru',avatar:'🦉',text:'Hari ini kita bahas etika berkomentar di media sosial. Menurut kalian, kenapa kita harus menjaga etika di dunia maya?',ts:Date.now()-240*60000,deleted:false},
+    {id:'m7',userId:'u2',displayName:'Sinta',avatar:'🐰',text:'Karena di balik layar juga ada manusia Pak, bisa tersinggung 😅',ts:Date.now()-228*60000,deleted:false},
+    {id:'m8',userId:'u5',displayName:'Fajar',avatar:'🐶',text:'Betul! Jejak digital juga susah dihapus, Pak',ts:Date.now()-216*60000,deleted:false},
+    {id:'m9',userId:'u1',displayName:'Bima',avatar:'🐼',text:'Iya, komentar kita bisa di-screenshot orang 😬',ts:Date.now()-204*60000,deleted:false},
+    {id:'m10',userId:'u-guru',displayName:'Pak Guru',avatar:'🦉',text:'Tepat sekali 👍 Makanya ada rumus THINK sebelum posting. Ada yang masih ingat?',ts:Date.now()-192*60000,deleted:false},
+    {id:'m11',userId:'u4',displayName:'Dina',avatar:'🐱',text:'True, Helpful, Inspiring, Necessary, Kind, Pak!',ts:Date.now()-180*60000,deleted:false},
+    {id:'m12',userId:'u3',displayName:'Raka',avatar:'🦊',text:'Aku baru tahu kalau like juga termasuk jejak digital 😮',ts:Date.now()-168*60000,deleted:false},
+    {id:'m13',userId:'u-guru',displayName:'Pak Guru',avatar:'🦉',text:'Betul, Raka. Sekarang tugas kelompok: pilih dua platform ruang publik virtual untuk laporan kalian.',ts:Date.now()-156*60000,deleted:false},
+    {id:'m14',userId:'u2',displayName:'Sinta',avatar:'🐰',text:'Kelompokku pilih YouTube dan Discord, Pak 🎥',ts:Date.now()-144*60000,deleted:false},
+    {id:'m15',userId:'u1',displayName:'Bima',avatar:'🐼',text:'Kelompokku TikTok sama grup Facebook, Pak',ts:Date.now()-132*60000,deleted:false},
+    {id:'m16',userId:'u5',displayName:'Fajar',avatar:'🐶',text:'Kalau Wikipedia termasuk RPV nggak, Pak?',ts:Date.now()-120*60000,deleted:false},
+    {id:'m17',userId:'u-guru',displayName:'Pak Guru',avatar:'🦉',text:'Termasuk! Wikipedia adalah ruang publik untuk bertukar pengetahuan. Alasan lengkapnya nanti kalian analisis di laporan ya.',ts:Date.now()-108*60000,deleted:false},
+    {id:'m18',userId:'u3',displayName:'Raka',avatar:'🦊',text:'Siap Pak, nanti kami kirim screenshot praktiknya juga 📸',ts:Date.now()-96*60000,deleted:false},
+    {id:'m19',userId:'u4',displayName:'Dina',avatar:'🐱',text:'Pak, kalau ada komentar toxic di grup, kita harus bagaimana?',ts:Date.now()-84*60000,deleted:false},
+    {id:'m20',userId:'u-guru',displayName:'Pak Guru',avatar:'🦉',text:'Jangan dibalas dengan emosi. Laporkan, blokir bila perlu, dan beri tahu guru. Itu contoh empati digital 💛',ts:Date.now()-72*60000,deleted:false},
+    {id:'m21',userId:'u2',displayName:'Sinta',avatar:'🐰',text:'Noted, Pak! Makasih penjelasannya 🙏',ts:Date.now()-60*60000,deleted:false},
+    {id:'m22',userId:'u1',displayName:'Bima',avatar:'🐼',text:'Oke, nanti malam kami diskusi kelompok lagi di sini ya, Pak',ts:Date.now()-45*60000,deleted:false},
+    {id:'m23',userId:'u-guru',displayName:'Pak Guru',avatar:'🦉',text:'Boleh, gunakan ruang ini dengan sopan. Selamat bekerja, anak-anak! 🌟',ts:Date.now()-30*60000,deleted:false},
+    {id:'m24',userId:'u3',displayName:'Raka',avatar:'🦊',text:'Semangat semua! 💪',ts:Date.now()-15*60000,deleted:false},
+  ],
+  seq:100
+};
+function mockPub(u){ return {id:u.id,username:u.username,displayName:u.displayName,role:u.role,avatar:u.avatar,mutedUntil:u.mutedUntil}; }
+function mockUser(token){ const id=MockDB.sessions[token]; return MockDB.users.find(u=>u.id===id)||null; }
+const Mock = {
+  login(r){ const u=MockDB.users.find(x=>x.username===String(r.username||'').toLowerCase().trim());
+    if(!u||u.password!==r.password) return {ok:false,error:'Nama pengguna atau password salah.'};
+    const t='demo-'+Math.random().toString(36).slice(2); MockDB.sessions[t]=u.id; u.lastSeen=Date.now();
+    return {ok:true,token:t,user:mockPub(u)}; },
+  logout(r){ delete MockDB.sessions[r.token]; return {ok:true}; },
+  heartbeat(r){ const u=mockUser(r.token); if(!u) return {ok:false,error:'Sesi berakhir.'}; u.lastSeen=Date.now(); return {ok:true,mutedUntil:u.mutedUntil}; },
+  getState(r){ const me=mockUser(r.token); if(!me) return {ok:false,error:'Sesi berakhir.'}; me.lastSeen=Date.now();
+    const now=Date.now();
+    return {ok:true,me:mockPub(me),
+      messages:MockDB.messages.slice(-150).map(m=>({id:m.id,userId:m.userId,displayName:m.displayName,avatar:m.avatar,text:m.deleted?'':m.text,deleted:m.deleted,ts:m.ts,mine:m.userId===me.id})),
+      online:MockDB.users.filter(u=>now-u.lastSeen<90000).map(u=>({id:u.id,displayName:u.displayName,avatar:u.avatar,role:u.role})),
+      totalUsers:MockDB.users.length}; },
+  sendMessage(r){ const u=mockUser(r.token); if(!u) return {ok:false,error:'Sesi berakhir.'};
+    if(u.mutedUntil>Date.now()) return {ok:false,error:'Kamu sedang di-mute oleh guru.'};
+    const text=String(r.text||'').trim().slice(0,500); if(!text) return {ok:false,error:'Pesan kosong.'};
+    const m={id:'m'+(MockDB.seq++),userId:u.id,displayName:u.displayName,avatar:u.avatar,text,ts:Date.now(),deleted:false,mine:true};
+    MockDB.messages.push(m); u.lastSeen=Date.now(); return {ok:true,message:m}; },
+  updateProfile(r){ const u=mockUser(r.token); if(!u) return {ok:false,error:'Sesi berakhir.'};
+    if(r.displayName){ const n=String(r.displayName).trim().slice(0,30); if(n.length<2) return {ok:false,error:'Nama minimal 2 karakter.'}; u.displayName=n;
+      MockDB.messages.forEach(m=>{ if(m.userId===u.id&&!m.deleted) m.displayName=n; }); }
+    if(r.avatar) u.avatar=String(r.avatar).slice(0,4);
+    if(r.newPassword){ if(u.password!==r.oldPassword) return {ok:false,error:'Password lama salah.'};
+      if(String(r.newPassword).length<4) return {ok:false,error:'Password baru minimal 4 karakter.'}; u.password=r.newPassword; }
+    return {ok:true,user:mockPub(u)}; },
+  adminListUsers(r){ const u=mockUser(r.token); if(!u||u.role!=='guru') return {ok:false,error:'Khusus guru.'};
+    const now=Date.now();
+    return {ok:true,users:MockDB.users.map(x=>({id:x.id,username:x.username,displayName:x.displayName,role:x.role,avatar:x.avatar,mutedUntil:x.mutedUntil,lastSeen:x.lastSeen,online:now-x.lastSeen<90000}))}; },
+  adminCreateUsers(r){ const u=mockUser(r.token); if(!u||u.role!=='guru') return {ok:false,error:'Khusus guru.'};
+    const pw=String(r.defaultPassword||'siswa123'); const created=[],skipped=[];
+    (r.nicknames||[]).forEach(n=>{ const d=String(n||'').trim().slice(0,30); if(!d) return;
+      const un=d.toLowerCase().replace(/\s+/g,'');
+      if(MockDB.users.some(x=>x.username===un)){skipped.push(d);return;}
+      MockDB.users.push({id:'u'+Date.now()+Math.random(),username:un,password:pw,displayName:d,role:'siswa',avatar:AVATARS[Math.floor(Math.random()*AVATARS.length)],mutedUntil:0,lastSeen:0});
+      created.push({username:un,displayName:d}); });
+    return {ok:true,created,skipped}; },
+  adminDeleteMessage(r){ const u=mockUser(r.token); if(!u||u.role!=='guru') return {ok:false,error:'Khusus guru.'};
+    const m=MockDB.messages.find(x=>x.id===String(r.messageId)); if(!m) return {ok:false,error:'Pesan tidak ditemukan.'};
+    m.deleted=true; m.text=''; return {ok:true}; },
+  adminMute(r){ const u=mockUser(r.token); if(!u||u.role!=='guru') return {ok:false,error:'Khusus guru.'};
+    const t=MockDB.users.find(x=>x.id===r.userId); if(!t) return {ok:false,error:'Siswa tidak ditemukan.'};
+    const min=Number(r.minutes)||0; t.mutedUntil=min>0?Date.now()+min*60000:0; return {ok:true,mutedUntil:t.mutedUntil}; },
+  adminResetPassword(r){ const u=mockUser(r.token); if(!u||u.role!=='guru') return {ok:false,error:'Khusus guru.'};
+    const t=MockDB.users.find(x=>x.id===r.userId); if(!t) return {ok:false,error:'Siswa tidak ditemukan.'};
+    const pw=String(r.newPassword||'siswa123'); if(pw.length<4) return {ok:false,error:'Password minimal 4 karakter.'};
+    t.password=pw; return {ok:true}; },
+  adminDeleteUser(r){ const u=mockUser(r.token); if(!u||u.role!=='guru') return {ok:false,error:'Khusus guru.'};
+    const i=MockDB.users.findIndex(x=>x.id===r.userId); if(i<0) return {ok:false,error:'Siswa tidak ditemukan.'};
+    if(MockDB.users[i].role==='guru') return {ok:false,error:'Akun guru tidak bisa dihapus.'};
+    MockDB.users.splice(i,1); return {ok:true}; },
+};
+
+async function api(action, data){
+  if(!API_URL){ await new Promise(r=>setTimeout(r,120)); return Mock[action](data||{}); }
+  const res = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({action},data)) });
+  return res.json();
+}
+
+/* ================= STATE ================= */
+const state = { token:null, me:null, allMessages:[], shownCount:5, isAdmin:false, selAvatar:null, pollTimer:null, heartTimer:null };
+
+/* ================= LOGIN ================= */
+document.getElementById('demoHint').style.display = API_URL ? 'none' : 'block';
+document.getElementById('loginBtn').onclick = doLogin;
+document.getElementById('password').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+
+async function doLogin(){
+  const err=document.getElementById('loginErr'); err.textContent='';
+  const username=document.getElementById('username').value.trim();
+  const password=document.getElementById('password').value;
+  if(!username||!password){ err.textContent='Isi nama pengguna dan password dulu ya.'; return; }
+  document.getElementById('loginBtn').disabled=true;
+  try{
+    const r=await api('login',{username,password});
+    if(!r.ok){ err.textContent=r.error; return; }
+    state.token=r.token; state.me=r.user; state.isAdmin=r.user.role==='guru';
+    localStorage.setItem('rpv_session', JSON.stringify({token:r.token}));
+    enterChat();
+  }catch(e){ err.textContent='Gagal terhubung. Cek koneksi / URL Web App.'; }
+  finally{ document.getElementById('loginBtn').disabled=false; }
+}
+
+function enterChat(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('chatScreen').style.display='block';
+  renderMe();
+  document.getElementById('adminBtn').style.display = state.isAdmin?'block':'none';
+  state.allMessages=[]; state.shownCount=5; document.getElementById('messages').innerHTML='';
+  poll(); state.pollTimer=setInterval(poll,3000);
+  beat(); state.heartTimer=setInterval(beat,20000);
+}
+
+async function beat(){ try{ const r=await api('heartbeat',{token:state.token}); if(r.ok&&r.mutedUntil!==undefined){ state.me.mutedUntil=r.mutedUntil; renderMute(); } }catch(e){} }
+
+/* ================= RENDER ================= */
+function renderMe(){
+  document.getElementById('myAvatar').textContent=state.me.avatar;
+  document.getElementById('myName').textContent=state.me.displayName;
+  document.getElementById('myRole').textContent=state.isAdmin?'🛡️ Guru (Moderator)':'🧑 Siswa';
+  renderMute();
+}
+function renderMute(){
+  const banner=document.getElementById('muteBanner');
+  const input=document.getElementById('msgInput');
+  const until=state.me.mutedUntil||0;
+  if(until>Date.now()){
+    banner.style.display='block';
+    banner.textContent='🔇 Kamu sedang di-mute oleh guru sampai '+fmtTime(until)+'. Tunggu sebentar ya!';
+    input.disabled=true;
+  }else{ banner.style.display='none'; input.disabled=false; }
+}
+function renderOnline(list,total){
+  document.getElementById('onlineCount').textContent=list.length;
+  document.getElementById('headSub').textContent=list.length+' online • '+total+' anggota • Berinteraksi dengan sopan ya! ✨';
+  const box=document.getElementById('onlineList'); box.innerHTML='';
+  list.forEach(u=>{
+    const d=document.createElement('div'); d.className='member';
+    d.innerHTML='<span class="dot"></span><span class="avatar sm">'+esc(u.avatar)+'</span><span class="nm">'+esc(u.displayName)+'</span>'+(u.role==='guru'?'<span class="tag guru">GURU</span>':'');
+    box.appendChild(d);
+  });
+}
+function bubbleHtml(m){
+  const senderHtml = m.mine?'':'<div class="sender" style="color:'+nameColor(m.displayName)+'">'+esc(m.displayName)+'</div>';
+  const text = m.deleted ? '🚫 Pesan ini dihapus oleh guru.' : esc(m.text);
+  const delBtn = (state.isAdmin && !m.deleted) ? '<button class="del-btn admin-visible" data-mid="'+m.id+'" title="Hapus pesan">🗑️</button>' : '';
+  return '<div class="msg'+(m.mine?' me':'')+(m.deleted?' deleted':'')+'" data-mid="'+m.id+'">'
+    + '<div class="avatar sm">'+esc(m.avatar)+'</div>'
+    + '<div class="bubble">'+senderHtml+'<div class="text">'+text+'</div><div class="time">'+fmtTime(m.ts)+delBtn+'</div></div></div>';
+}
+function listSig(list){ return list.map(m=>m.id+(m.deleted?'x':'')).join(','); }
+function renderMessages(mode){
+  const box=document.getElementById('messages');
+  const oldH=box.scrollHeight, oldTop=box.scrollTop;
+  const wasAtBottom = oldH-oldTop-box.clientHeight < 90;
+  box.innerHTML=state.allMessages.slice(-state.shownCount).map(bubbleHtml).join('');
+  if(mode==='top'){ box.scrollTop=box.scrollHeight-oldH+oldTop; }
+  else if(mode==='bottom'||wasAtBottom){ box.scrollTop=box.scrollHeight; }
+  else { box.scrollTop=box.scrollHeight-oldH+oldTop; }
+}
+/* scroll ke atas -> muat 5 pesan sebelumnya */
+document.getElementById('messages').addEventListener('scroll',function(){
+  if(this.scrollTop<50 && state.shownCount<state.allMessages.length){
+    state.shownCount=Math.min(state.shownCount+5,state.allMessages.length);
+    renderMessages('top');
+  }
+});
+/* hapus pesan (guru) via delegasi klik */
+document.getElementById('messages').addEventListener('click',async function(e){
+  const btn=e.target.closest('.del-btn'); if(!btn) return;
+  if(!confirm('Hapus pesan ini?')) return;
+  const r=await api('adminDeleteMessage',{token:state.token,messageId:btn.dataset.mid});
+  if(r.ok){ toast('Pesan dihapus 🗑️'); poll(); } else toast(r.error);
+});
+async function poll(){
+  try{
+    const r=await api('getState',{token:state.token});
+    if(!r.ok){ if(r.error) endSession(r.error); return; }
+    state.me=r.me; renderMe(); renderOnline(r.online,r.totalUsers);
+    const prevIds=new Set(state.allMessages.map(m=>m.id));
+    const prevSig=listSig(state.allMessages);
+    const newTail=r.messages.filter(m=>!prevIds.has(m.id)).length;
+    state.allMessages=r.messages;
+    if(prevIds.size&&newTail) state.shownCount+=newTail;
+    if(listSig(state.allMessages)!==prevSig) renderMessages();
+  }catch(e){}
+}
+function endSession(msg){ clearInterval(state.pollTimer); clearInterval(state.heartTimer);
+  localStorage.removeItem('rpv_session');
+  document.getElementById('chatScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginErr').textContent=msg||''; }
+
+/* ================= KIRIM PESAN ================= */
+const msgInput=document.getElementById('msgInput');
+msgInput.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMsg(); } });
+document.getElementById('sendBtn').onclick=sendMsg;
+async function sendMsg(){
+  const text=msgInput.value.trim(); if(!text) return;
+  msgInput.value='';
+  const r=await api('sendMessage',{token:state.token,text});
+  if(!r.ok){ toast(r.error); if(r.error.includes('mute')) poll(); return; }
+  state.allMessages.push(r.message); state.shownCount++;
+  renderMessages('bottom');
+}
+
+/* ================= PROFIL ================= */
+const avatarGrid=document.getElementById('avatarGrid');
+AVATARS.forEach(a=>{ const b=document.createElement('button'); b.textContent=a; b.type='button';
+  b.onclick=()=>{ state.selAvatar=a; [...avatarGrid.children].forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); };
+  avatarGrid.appendChild(b); });
+document.getElementById('profileBtn').onclick=()=>{
+  document.getElementById('pfName').value=state.me.displayName;
+  document.getElementById('pfOld').value=''; document.getElementById('pfNew').value='';
+  document.getElementById('pfErr').textContent='';
+  state.selAvatar=state.me.avatar;
+  [...avatarGrid.children].forEach(x=>x.classList.toggle('sel',x.textContent===state.selAvatar));
+  document.getElementById('profileModal').classList.add('open');
+};
+document.getElementById('pfCancel').onclick=()=>document.getElementById('profileModal').classList.remove('open');
+document.getElementById('pfSave').onclick=async()=>{
+  const err=document.getElementById('pfErr'); err.textContent='';
+  const payload={token:state.token,displayName:document.getElementById('pfName').value.trim(),avatar:state.selAvatar};
+  const np=document.getElementById('pfNew').value;
+  if(np){ payload.newPassword=np; payload.oldPassword=document.getElementById('pfOld').value; }
+  const r=await api('updateProfile',payload);
+  if(!r.ok){ err.textContent=r.error; return; }
+  state.me=r.user; renderMe(); poll();
+  document.getElementById('profileModal').classList.remove('open');
+  toast('Profil tersimpan! 🎉');
+};
+
+/* ================= ADMIN ================= */
+document.getElementById('adminBtn').onclick=()=>{ document.getElementById('adminModal').classList.add('open'); loadAdminUsers(); };
+document.getElementById('admClose').onclick=()=>document.getElementById('adminModal').classList.remove('open');
+document.getElementById('admCreate').onclick=async()=>{
+  const msg=document.getElementById('admMsg'); msg.textContent='';
+  const nicknames=document.getElementById('admNick').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!nicknames.length){ msg.textContent='Tulis dulu nama panggilan siswa (satu per baris).'; return; }
+  const r=await api('adminCreateUsers',{token:state.token,nicknames,defaultPassword:document.getElementById('admPw').value||'siswa123'});
+  if(!r.ok){ msg.textContent=r.error; return; }
+  let info='✅ Berhasil membuat '+r.created.length+' akun.';
+  if(r.created.length) info+='\n'+r.created.map(c=>c.displayName+' → username: '+c.username).join('\n');
+  if(r.skipped.length) info+='\n⚠️ Sudah ada: '+r.skipped.join(', ');
+  msg.style.whiteSpace='pre-line'; msg.textContent=info;
+  document.getElementById('admNick').value='';
+  loadAdminUsers();
+};
+async function loadAdminUsers(){
+  const r=await api('adminListUsers',{token:state.token});
+  if(!r.ok){ toast(r.error); return; }
+  const tb=document.getElementById('admUsers'); tb.innerHTML='';
+  r.users.forEach(u=>{
+    const tr=document.createElement('tr');
+    const muted=u.mutedUntil>Date.now();
+    tr.innerHTML='<td><span style="font-size:20px">'+esc(u.avatar)+'</span> <b>'+esc(u.displayName)+'</b><br><span style="color:#7A8AA0;font-size:11px">@'+esc(u.username)+'</span> <span class="tag '+u.role+'">'+u.role.toUpperCase()+'</span></td>'
+      +'<td>'+(u.online?'<span class="tag on">ONLINE</span>':'<span class="tag off">offline</span>')+'</td>'
+      +'<td>'+(muted?'<span class="tag muted">mute s/d '+fmtTime(u.mutedUntil)+'</span>':'—')+'</td>'
+      +'<td></td>';
+    const act=tr.children[3];
+    if(u.role!=='guru'){
+      const b=(t,c,fn)=>{ const x=document.createElement('button'); x.className='rowbtn'; x.textContent=t; x.style.background=c; x.style.color='#fff'; x.onclick=fn; act.appendChild(x); };
+      if(muted){ b('Unmute','#2ED573',async()=>{ await api('adminMute',{token:state.token,userId:u.id,minutes:0}); toast('Mute dicabut ✅'); loadAdminUsers(); }); }
+      else{ b('Mute 5 mnt','#FFA502',async()=>{ await api('adminMute',{token:state.token,userId:u.id,minutes:5}); toast('Siswa di-mute 5 menit 🔇'); loadAdminUsers(); });
+            b('Mute 30 mnt','#FF7A3D',async()=>{ await api('adminMute',{token:state.token,userId:u.id,minutes:30}); toast('Siswa di-mute 30 menit 🔇'); loadAdminUsers(); }); }
+      b('Reset PW','#1E90FF',async()=>{ const pw=prompt('Password baru untuk '+u.displayName+':','siswa123'); if(!pw) return;
+        const rr=await api('adminResetPassword',{token:state.token,userId:u.id,newPassword:pw}); toast(rr.ok?'Password direset ✅':rr.error); });
+      b('Hapus','#E63E54',async()=>{ if(!confirm('Hapus akun '+u.displayName+'?'))return;
+        const rr=await api('adminDeleteUser',{token:state.token,userId:u.id}); toast(rr.ok?'Akun dihapus':'Akun gagal dihapus'); if(rr.ok) loadAdminUsers(); });
+    }
+    tb.appendChild(tr);
+  });
+}
+
+/* ================= LAINNYA ================= */
+document.getElementById('logoutBtn').onclick=async()=>{
+  clearInterval(state.pollTimer); clearInterval(state.heartTimer);
+  try{ await api('logout',{token:state.token}); }catch(e){}
+  localStorage.removeItem('rpv_session');
+  document.getElementById('chatScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+};
+document.getElementById('hambBtn').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+
+/* auto-login */
+(function(){
+  try{
+    const s=JSON.parse(localStorage.getItem('rpv_session')||'null');
+    if(s&&s.token){ state.token=s.token;
+      api('getState',{token:s.token}).then(r=>{
+        if(r.ok){ state.me=r.me; state.isAdmin=r.me.role==='guru'; enterChat(); }
+        else localStorage.removeItem('rpv_session');
+      }).catch(()=>{});
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
